@@ -1,68 +1,24 @@
-import * as vscode from 'vscode';
-import { ExtensionContext, Uri, FileSystemError } from 'vscode';
-import { VirtualFileSystem } from './file-system/virtual-file-system';
-import { importFiles, mimicChanges } from './file-system/real-file-system';
+import { ExtensionContext, commands, window, workspace } from 'vscode';
+import { FolderStructView } from './tree-view/folder-struct-view';
+import { FolderStructEngine } from './engine/folder-struct-engine';
 
-let scheme = '';
+export async function activate(context: ExtensionContext) {
+    registerCommands(context);
 
-export function activate(context: ExtensionContext) {
-    let fstrctInit = vscode.commands.registerCommand('fstrct.init', () => {
-		vscode.window.showInformationMessage('Starting fstrct...');
-	});
-	context.subscriptions.push(fstrctInit);
+    if (!workspace.workspaceFolders) { throw new Error(); }
+    const folder = workspace.workspaceFolders[0];
 
-	const currentFolder = getCurrentFolder();
-
-	const vfs = new VirtualFileSystem();
-
-    const segments = currentFolder.uri.path.split('/');
-
-    const pattern = `**/${segments[segments.length - 1]}/**`;
-
-    const realFs = vscode.workspace.createFileSystemWatcher(pattern);
-    context.subscriptions.push(vscode.workspace.registerFileSystemProvider(scheme, vfs, { isCaseSensitive: true }));
-
-    importFiles(currentFolder.uri, vfs, scheme);
-    vscode.window.showInformationMessage(`Watching ${pattern}`);
-    mimicChanges(realFs, vfs);
-}
-
-function getCurrentFolder() {
-    if (!vscode.workspace.workspaceFolders) {
-        vscode.window.showErrorMessage('No folder or workspace opened');
-        throw new FileSystemError();
-    }
-
-    const currentFolder = vscode.workspace.workspaceFolders.filter(f => !f.uri?.scheme.match(/fstrct-.+-scaffolded/))[0];
-    if (!currentFolder) {
-        throw new FileSystemError();
-    }
-    
-    const fstrctFolder = vscode.workspace.workspaceFolders?.find(f => f.uri?.scheme.match(/fstrct-.+-scaffolded/));
-
-    if (fstrctFolder) {
-        scheme = fstrctFolder.uri.scheme;
-        return currentFolder;
-    }
-
-    const virtualScheme = `fstrct-${currentFolder.uri.scheme}-scaffolded`;
-    const root = '/';
-    const virtualWorkspaceUri = Uri.parse(`${virtualScheme}:${root}`);
-
-    vscode.workspace.updateWorkspaceFolders(0, 0, 
-    { 
-            uri: virtualWorkspaceUri,
-            name: `${currentFolder.name} (scaffolded)`
+    const engine = await FolderStructEngine.start({
+        rootPath: folder.uri.path
     });
-    
-    scheme = virtualScheme;
-
-    return currentFolder;
+    FolderStructView.create(context, engine);
 }
 
-export function deactivate(context: ExtensionContext) {
-    const fstrctFolderIndex = vscode.workspace.workspaceFolders?.findIndex((folder) => folder.uri.scheme === scheme);
-    if (fstrctFolderIndex) {
-        vscode.workspace.updateWorkspaceFolders(fstrctFolderIndex, 1);
-    }
+function registerCommands(context: ExtensionContext) {
+    const initCommand = commands.registerCommand('fstrct.init', () => {
+		window.showInformationMessage('Starting fstrct...');
+	});
+	context.subscriptions.push(initCommand);
 }
+
+export function deactivate() { }
