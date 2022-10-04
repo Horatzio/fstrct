@@ -1,11 +1,8 @@
 import { FileType, Uri, workspace } from "vscode";
 import { FolderStructure } from "./folder-structure";
+import { FolderStructConfiguration } from "./folder-struct-configuration";
 import { Item } from "./item";
 import { getName } from "./uri-helper";
-
-interface FolderStructConfiguration {
-    rootPath: string;
-}
 
 type Callback = (fstrct: FolderStructure) => void;
 
