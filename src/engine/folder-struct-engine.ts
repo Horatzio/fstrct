@@ -15,7 +15,7 @@ export class FolderStructEngine {
     }
 
     public static async start(config: FolderStructConfiguration) {
-        const rootUri = Uri.parse(`file:${config.rootPath}`);
+        const rootUri = Uri.file(config.rootPath);
         const children = await this.parseFolder(rootUri);
         const rootStat = await workspace.fs.stat(rootUri);
         const root: Item = {

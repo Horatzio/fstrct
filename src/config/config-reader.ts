@@ -3,23 +3,23 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export class ConfigReader {
-    public static read(rootPath: string): FolderStructConfiguration {
+    public static read(workspaceRootPath: string): FolderStructConfiguration {
 
-        const reader = new ConfigReader(rootPath);
+        const reader = new ConfigReader(workspaceRootPath);
         return reader.read();
     }
 
-    private rootPath: string;
-    private constructor(rootPath: string) {
-        this.rootPath = rootPath;
+    private workspaceRootPath: string;
+    private constructor(workspaceRootPath: string) {
+        this.workspaceRootPath = workspaceRootPath;
     }
 
     private readonly configFile = 'fstrct.json';
     private read(): FolderStructConfiguration {
-        const configPath = path.join(this.rootPath, this.configFile);
+        const configPath = path.join(this.workspaceRootPath, this.configFile);
 
         if (!fs.existsSync(configPath)) {
-            return this.defaultConfig(this.rootPath);
+            return this.defaultConfig(this.workspaceRootPath);
         }
 
         const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
@@ -28,7 +28,15 @@ export class ConfigReader {
     }
 
     private verifyAndValidate(config: any): FolderStructConfiguration {
-        throw new Error('Method not implemented.');
+        const configRootPath: string = typeof config?.rootPath === 'string' ? config.rootPath : '.';
+
+        const unresolvedPath = path.join(this.workspaceRootPath, configRootPath);
+        const resolvedPath = path.resolve(unresolvedPath);
+
+        return {
+            ...config,
+            rootPath: resolvedPath
+        };
     }
 
     private defaultConfig(rootPath: string): FolderStructConfiguration {

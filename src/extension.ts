@@ -11,6 +11,7 @@ export async function activate(context: ExtensionContext) {
 
     if (!rootPath) {
         window.showErrorMessage('No open workspace.');
+        return;
     }
 
     const config = ConfigReader.read(rootPath);

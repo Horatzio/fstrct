@@ -1,4 +1,4 @@
-import { window, ExtensionContext, TreeDataProvider, CancellationToken, Event, ProviderResult, TreeItem, EventEmitter, TreeItemCollapsibleState } from 'vscode';
+import { window, ExtensionContext, TreeDataProvider, CancellationToken, Event, ProviderResult, TreeItem, EventEmitter, TreeItemCollapsibleState, FileType } from 'vscode';
 import { FolderStructEngine } from '../engine/folder-struct-engine';
 import { FolderStructure } from '../engine/folder-structure';
 
@@ -30,11 +30,13 @@ class FolderStructTreeDataProvider implements TreeDataProvider<FolderStructNode>
 	
 	onDidChangeTreeData?: Event<void | FolderStructNode | FolderStructNode[] | null | undefined> = this.eventEmitter.event;
     getTreeItem(element: FolderStructNode): TreeItem | Thenable<TreeItem> {
+		const item = this.folderStructure?.find(element.path);
+
         return {
 			id: element.path,
 			label: element.name,
 			contextValue: 'fstrctView',
-			collapsibleState: TreeItemCollapsibleState.Collapsed
+			collapsibleState: item?.type === FileType.Directory ? TreeItemCollapsibleState.Collapsed : TreeItemCollapsibleState.None
 		}; 
     }
     getChildren(element?: FolderStructNode): ProviderResult<FolderStructNode[]> {

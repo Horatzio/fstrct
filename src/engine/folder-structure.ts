@@ -15,10 +15,12 @@ export class FolderStructure {
             return null;
         }
 
-        let currentSegment = segments.shift() || '';
+        segments.shift();
+        let currentSegment = segments[0] || '';
         while (segments.length) {
             current = current.children[currentSegment];
-            currentSegment = segments.shift() || '';
+            segments.shift();
+            currentSegment = segments[0] || '';
         }
 
         return current;
